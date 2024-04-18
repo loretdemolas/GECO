@@ -1,5 +1,7 @@
 # import the necessary libraries
 import os
+import time
+
 from torchvision.transforms import ToPILImage
 from torchvision.transforms import Grayscale
 from torchvision.transforms import ToTensor
@@ -12,6 +14,8 @@ import numpy as np
 import argparse
 import torch
 import cv2
+
+from leopard.data_collection import DataCollector
 
 # initialize the argument parser and establish the arguments required
 parser = argparse.ArgumentParser()
@@ -49,6 +53,12 @@ data_transform = transforms.Compose([
     Resize((48, 48)),
     ToTensor()
 ])
+collection_interval = 15 * 60  # 15 minutes * 60 seconds
+
+# Initialize variables to keep track of the last collection time
+last_collection_time = time.time()
+
+data_collector = DataCollector()
 
 # check if input is provided
 if args['video'] is not None:
@@ -105,6 +115,11 @@ while True:
             face = data_transform(face)
             face = face.unsqueeze(0)
             face = face.to(device)
+
+            current_time = time.time()
+            if current_time - last_collection_time >= collection_interval:
+                data_collector.collect_data_prompt(face)
+                last_collection_time = current_time
 
             # infer the face (roi) into our pretrained model and compute the
             # probability score and class for each face and grab the readable
