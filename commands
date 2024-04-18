@@ -1,0 +1,11 @@
+to train model:
+
+ py train.py --model output/model.pth --plot output/plot.png
+
+to run emotional detect:
+
+to analyze video:
+py emotion_detection.py -i video.mp4 --model output/model.pth --prototxt model/deploy.prototxt.txt --caffemodel model/res10_300x300_ssd_iter_140000_fp16.caffemodel
+
+to use webcam:
+py emotion_detection.py  --model output/model.pth --prototxt model/deploy.prototxt.txt --caffemodel model/res10_300x300_ssd_iter_140000_fp16.caffemodel
