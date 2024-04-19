@@ -4,13 +4,13 @@ import speech_recognition as sr
 class SpeechToText:
     def __init__(self):
         self.recognizer = sr.Recognizer()
+        self.responded = False
 
     def listen(self):
         with sr.Microphone() as source:
-            print("Listening...")
-            self.recognizer.adjust_for_ambient_noise(source)
+            self.recognizer.adjust_for_ambient_noise(source, duration=0.2)
             audio = self.recognizer.listen(source)
-
+            print("Listening...")
         try:
             print("Recognizing...")
             text = self.recognizer.recognize_google(audio)

@@ -1,7 +1,6 @@
 # import the necessary libraries
 import os
 import time
-
 from torchvision.transforms import ToPILImage
 from torchvision.transforms import Grayscale
 from torchvision.transforms import ToTensor
@@ -58,6 +57,8 @@ collection_interval = 15 * 60  # 15 minutes * 60 seconds
 # Initialize variables to keep track of the last collection time
 last_collection_time = time.time()
 
+last_printed_time_left = None
+
 data_collector = DataCollector()
 
 # check if input is provided
@@ -79,7 +80,7 @@ while True:
         break
 
     # clone the current frame, convert it from BGR into RGB
-    frame = utils.resize_image(frame, width=500, height=500)
+    frame = utils.resize_image(frame, width=1500, height=1500)
     output = frame.copy()
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
@@ -109,16 +110,42 @@ while True:
             (start_x, start_y, end_x, end_y) = box.astype("int")
 
             # grab the region of interest within the image (the face),
+            face = frame[start_y:end_y, start_x:end_x]
+
+            #expand bounding box
+            #ensure box does not exceed frame
+            startX = max(0, startX-20)
+            startY = max(0, startY-20)
+            endX = min(w, endX+20)
+            endY = min(h, endY+20)
+
+            #grab face roi for data collection
+            face_roi = frame[start_y:end_y, start_x:end_x]
+
             # apply a data transform to fit the exact method our network was trained,
             # add a new dimension (C, H, W) => (N, C, H, W) and send it to the device
-            face = frame[start_y:end_y, start_x:end_x]
             face = data_transform(face)
             face = face.unsqueeze(0)
             face = face.to(device)
 
+            # Perform data collection if it's time
             current_time = time.time()
-            if current_time - last_collection_time >= collection_interval:
-                data_collector.collect_data_prompt(face)
+            time_left = collection_interval - (current_time - last_collection_time)
+            # Check if the time left has changed and is a whole number
+            if int(time_left) != last_printed_time_left:
+                # Print the time left
+                print(f"Time left until next collection: {int(time_left)} seconds")
+
+                # Update the last printed time left
+                last_printed_time_left = int(time_left)
+
+            if time_left <= 0:
+                print("Collecting data now...")
+                data_collector.collect_frames(face_roi)
+            #check to see if data collection is full.
+
+            if data_collector.collection_full:
+                data_collector.collect_data_prompt()
                 last_collection_time = current_time
 
             # infer the face (roi) into our pretrained model and compute the
