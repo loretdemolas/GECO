@@ -208,7 +208,7 @@ print(f"[INFO] Total training time: {datetime.now() - start_time}...")
 # move model back to cpu and save the trained model to disk
 if device == "cuda":
     model = model.to("cpu")
-torch.save(model.state_dict(), 'output/model.pth' )
+torch.save(model.state_dict(), 'output/model.pth')
 
 # plot the training loss and accuracy overtime
 plt.style.use("ggplot")
